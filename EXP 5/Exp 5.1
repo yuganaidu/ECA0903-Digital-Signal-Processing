@@ -1,0 +1,56 @@
+clc;
+clear;
+close all;
+
+% FIR High-Pass Filter using Rectangular Window
+
+% Specifications
+Fs = 1000;          % Sampling frequency (Hz)
+Fc = 200;           % Cut-off frequency (Hz)
+N = 50;             % Filter order
+
+% Normalized cut-off frequency
+Wn = Fc/(Fs/2);
+
+% Generate Rectangular Window
+w = rectwin(N+1);
+
+% Design FIR High-Pass Filter
+b = fir1(N, Wn, 'high', w);
+
+% Display filter coefficients
+disp('FIR High-Pass Filter Coefficients:');
+disp(b);
+
+% Frequency response
+[H, f] = freqz(b, 1, 1024, Fs);
+
+% Magnitude response
+figure;
+plot(f, abs(H), 'LineWidth', 1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+title('Magnitude Response of FIR High-Pass Filter');
+
+% Phase response
+figure;
+plot(f, angle(H), 'LineWidth', 1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Phase (Radians)');
+title('Phase Response of FIR High-Pass Filter');
+
+% Impulse response
+figure;
+stem(0:N, b, 'filled');
+grid on;
+xlabel('Sample');
+ylabel('Amplitude');
+title('Impulse Response of FIR High-Pass Filter');
+
+% Pole-Zero plot
+figure;
+zplane(b, 1);
+grid on;
+title('Pole-Zero Plot of FIR High-Pass Filter');

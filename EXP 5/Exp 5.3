@@ -1,0 +1,29 @@
+clc;
+clear;
+close all;
+
+% Filter specifications
+N = 50;              % Filter order
+Fc = 0.3;            % Normalized cutoff frequency
+
+% Design FIR High-Pass Filter using Hanning window
+b = fir1(N, Fc, 'high', hann(N+1));
+
+% Frequency response
+[H, W] = freqz(b, 1, 1024);
+
+% Plot magnitude response
+figure;
+plot(W/pi, 20*log10(abs(H)));
+grid on;
+xlabel('Normalized Frequency (\times\pi rad/sample)');
+ylabel('Magnitude (dB)');
+title('FIR High-Pass Filter using Hanning Window');
+
+% Impulse response
+figure;
+stem(0:N, b);
+grid on;
+xlabel('n');
+ylabel('h(n)');
+title('Impulse Response of FIR High-Pass Filter');
