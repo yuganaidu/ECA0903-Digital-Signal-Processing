@@ -1,0 +1,86 @@
+clc;
+clear;
+close all;
+
+% Finite Word Length Effects
+% Comparison of Truncation and Rounding
+
+% Parameters
+N = 100;
+f = 5;
+Fs = 100;
+A = 1;
+B = 4;                    % Number of fractional bits
+n = 0:N-1;
+
+% Generate discrete-time sinusoidal signal
+x = A*sin(2*pi*f*n/Fs);
+
+% Scaling factor
+Q = 2^B;
+
+% Truncation
+x_trunc = fix(x*Q)/Q;
+
+% Rounding
+x_round = round(x*Q)/Q;
+
+% Errors
+error_trunc = x - x_trunc;
+error_round = x - x_round;
+
+% Mean Square Errors
+MSE_trunc = mean(error_trunc.^2);
+MSE_round = mean(error_round.^2);
+
+% Display results
+fprintf('Finite Word Length Analysis\n');
+fprintf('Number of Fractional Bits = %d\n', B);
+fprintf('Truncation MSE = %.8f\n', MSE_trunc);
+fprintf('Rounding MSE   = %.8f\n', MSE_round);
+
+% Plot original and truncated signal
+figure;
+stem(n,x,'filled');
+hold on;
+stem(n,x_trunc);
+grid on;
+xlabel('Sample Number');
+ylabel('Amplitude');
+title('Original and Truncated Signal');
+legend('Original','Truncated');
+
+% Plot original and rounded signal
+figure;
+stem(n,x,'filled');
+hold on;
+stem(n,x_round);
+grid on;
+xlabel('Sample Number');
+ylabel('Amplitude');
+title('Original and Rounded Signal');
+legend('Original','Rounded');
+
+% Plot truncation error
+figure;
+stem(n,error_trunc,'filled');
+grid on;
+xlabel('Sample Number');
+ylabel('Error');
+title('Truncation Error');
+
+% Plot rounding error
+figure;
+stem(n,error_round,'filled');
+grid on;
+xlabel('Sample Number');
+ylabel('Error');
+title('Rounding Error');
+
+% Compare MSE
+figure;
+bar([MSE_trunc MSE_round]);
+grid on;
+set(gca,'XTickLabel',{'Truncation','Rounding'});
+ylabel('Mean Square Error');
+title('Comparison of Quantization Errors');

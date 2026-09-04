@@ -1,0 +1,69 @@
+clc;
+clear;
+close all;
+
+% Uniform Quantization of a Discrete-Time Sinusoidal Signal
+
+% Parameters
+N = 100;             % Number of samples
+f = 5;               % Signal frequency (Hz)
+Fs = 100;            % Sampling frequency (Hz)
+A = 1;               % Amplitude
+n = 0:N-1;
+
+% Generate discrete-time sinusoidal signal
+x = A*sin(2*pi*f*n/Fs);
+
+% Quantization parameters
+B = 3;               % Number of quantization bits
+L = 2^B;             % Number of quantization levels
+xmin = -A;
+xmax = A;
+
+% Quantization step size
+Delta = (xmax-xmin)/L;
+
+% Uniform quantization
+xq = Delta*floor((x-xmin)/Delta) + xmin + Delta/2;
+
+% Limit quantized signal to range
+xq = min(max(xq,xmin),xmax);
+
+% Quantization error
+e = x - xq;
+
+% Mean Square Error
+MSE = mean(e.^2);
+
+% Display results
+fprintf('Number of Bits = %d\n', B);
+fprintf('Number of Levels = %d\n', L);
+fprintf('Quantization Step Size = %.4f\n', Delta);
+fprintf('Mean Square Quantization Error = %.6f\n', MSE);
+
+% Plot original and quantized signal
+figure;
+stem(n,x,'filled');
+hold on;
+stairs(n,xq,'LineWidth',1.5);
+grid on;
+xlabel('Sample Number');
+ylabel('Amplitude');
+title('Original and Quantized Sinusoidal Signal');
+legend('Original Signal','Quantized Signal');
+
+% Plot quantization error
+figure;
+stem(n,e,'filled');
+grid on;
+xlabel('Sample Number');
+ylabel('Error');
+title('Quantization Error');
+
+% Quantization levels
+figure;
+plot(n,xq,'LineWidth',1.5);
+grid on;
+xlabel('Sample Number');
+ylabel('Quantized Amplitude');
+title('Uniform Quantization Output');
