@@ -1,0 +1,193 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 8000;                  % Sampling Frequency
+duration = 3;               % Duration in seconds
+
+t = 0:1/Fs:duration-1/Fs;
+
+%% GENERATE SPEECH-LIKE SIGNAL
+
+% Combination of frequencies to simulate a speech signal
+speech = sin(2*pi*300*t) + ...
+         0.6*sin(2*pi*600*t) + ...
+         0.4*sin(2*pi*900*t);
+
+% Normalize speech signal
+speech = speech / max(abs(speech));
+
+%% ADD BACKGROUND NOISE
+
+noise = 0.4*randn(size(speech));
+
+% Noisy speech signal
+noisy_speech = speech + noise;
+
+%% SPECTRAL SUBTRACTION
+
+NFFT = 512;                 % FFT size
+frame_length = 512;
+overlap = 256;
+
+% Number of frames
+num_frames = floor((length(noisy_speech)-frame_length) / ...
+                   (frame_length-overlap)) + 1;
+
+% Output signal
+enhanced_speech = zeros(size(noisy_speech));
+
+% Hamming window
+window = hamming(frame_length)';
+
+%% ESTIMATE NOISE SPECTRUM
+
+% Assume first few frames contain mainly noise
+noise_frames = 5;
+
+noise_spectrum = zeros(1,NFFT);
+
+for i = 1:noise_frames
+
+    start_index = (i-1)*(frame_length-overlap)+1;
+
+    frame = noisy_speech(start_index : ...
+            start_index+frame_length-1);
+
+    frame_windowed = frame .* window;
+
+    noise_fft = fft(frame_windowed,NFFT);
+
+    noise_spectrum = noise_spectrum + abs(noise_fft);
+end
+
+% Average noise spectrum
+noise_spectrum = noise_spectrum / noise_frames;
+
+%% PROCESS EACH FRAME
+
+for i = 1:num_frames
+
+    start_index = (i-1)*(frame_length-overlap)+1;
+
+    frame = noisy_speech(start_index : ...
+            start_index+frame_length-1);
+
+    % Apply window
+    frame_windowed = frame .* window;
+
+    % FFT
+    Y = fft(frame_windowed,NFFT);
+
+    magnitude = abs(Y);
+    phase = angle(Y);
+
+    %% SPECTRAL SUBTRACTION
+
+    % Subtract estimated noise spectrum
+    clean_magnitude = magnitude - noise_spectrum;
+
+    % Prevent negative magnitude
+    clean_magnitude(clean_magnitude < 0) = 0;
+
+    % Reconstruct spectrum
+    clean_spectrum = clean_magnitude .* exp(1j*phase);
+
+    % Inverse FFT
+    clean_frame = real(ifft(clean_spectrum,NFFT));
+
+    % Overlap-add reconstruction
+    enhanced_speech(start_index : ...
+        start_index+frame_length-1) = ...
+        enhanced_speech(start_index : ...
+        start_index+frame_length-1) + clean_frame(1:frame_length);
+end
+
+%% NORMALIZE OUTPUT
+
+enhanced_speech = enhanced_speech / ...
+                  max(abs(enhanced_speech));
+
+%% PLOT TIME DOMAIN SIGNALS
+
+figure;
+
+subplot(3,1,1);
+plot(t,speech);
+title('Original Speech Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,2);
+plot(t,noisy_speech);
+title('Noisy Speech Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,3);
+plot(t,enhanced_speech);
+title('Enhanced Speech Signal After Spectral Subtraction');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+%% FREQUENCY SPECTRUM ANALYSIS
+
+N = length(speech);
+
+f = (0:N-1)*(Fs/N);
+
+Speech_fft = abs(fft(speech));
+Noisy_fft = abs(fft(noisy_speech));
+Enhanced_fft = abs(fft(enhanced_speech));
+
+figure;
+
+subplot(3,1,1);
+plot(f(1:N/2),Speech_fft(1:N/2));
+title('Spectrum of Original Speech');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+subplot(3,1,2);
+plot(f(1:N/2),Noisy_fft(1:N/2));
+title('Spectrum of Noisy Speech');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+subplot(3,1,3);
+plot(f(1:N/2),Enhanced_fft(1:N/2));
+title('Spectrum of Enhanced Speech');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+%% CALCULATE SIGNAL-TO-NOISE RATIO
+
+signal_power = mean(speech.^2);
+
+noise_power_before = mean((noisy_speech - speech).^2);
+
+noise_power_after = mean((enhanced_speech - speech).^2);
+
+SNR_before = 10*log10(signal_power/noise_power_before);
+
+SNR_after = 10*log10(signal_power/noise_power_after);
+
+%% DISPLAY RESULTS
+
+fprintf('\n----- SPECTRAL SUBTRACTION RESULTS -----\n');
+
+fprintf('Sampling Frequency = %d Hz\n',Fs);
+
+fprintf('SNR Before Noise Reduction = %.2f dB\n',SNR_before);
+
+fprintf('SNR After Noise Reduction = %.2f dB\n',SNR_after);
+
+fprintf('\nSpeech Noise Reduction Using Spectral Subtraction Completed Successfully.\n');
