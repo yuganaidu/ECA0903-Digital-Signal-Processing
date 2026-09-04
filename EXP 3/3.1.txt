@@ -1,0 +1,35 @@
+clc;
+clear;
+close all;
+
+Fs = 1000;
+F1 = 200;
+F2 = 400;
+N = 4;
+Rp = 1;
+
+Wn = [F1 F2]/(Fs/2);
+
+[b1,a1] = butter(N,Wn,'bandpass');
+[b2,a2] = cheby1(N,Rp,Wn,'bandpass');
+
+figure;
+freqz(b1,a1,1024,Fs);
+title('Butterworth IIR Band-Pass Filter');
+
+figure;
+freqz(b2,a2,1024,Fs);
+title('Chebyshev Type-I IIR Band-Pass Filter');
+
+[h1,f] = freqz(b1,a1,1024,Fs);
+[h2,~] = freqz(b2,a2,1024,Fs);
+
+figure;
+plot(f,20*log10(abs(h1)),'b','LineWidth',1.5);
+hold on;
+plot(f,20*log10(abs(h2)),'r--','LineWidth',1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Comparison of Butterworth and Chebyshev Type-I Band-Pass Filters');
+legend('Butterworth','Chebyshev Type-I');
