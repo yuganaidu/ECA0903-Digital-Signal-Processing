@@ -1,0 +1,130 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 1000;              % Sampling Frequency (Hz)
+Fc = 150;               % Cutoff Frequency (Hz)
+N = 40;                 % Filter Order
+
+t = 0:1/Fs:1-1/Fs;      % Time Vector
+
+%% GENERATE INPUT SIGNAL
+
+% Low-frequency component (50 Hz)
+f1 = 50;
+
+% High-frequency component (250 Hz)
+f2 = 250;
+
+% Combined input signal
+x = sin(2*pi*f1*t) + 0.7*sin(2*pi*f2*t);
+
+%% DESIGN FIR HIGH-PASS FILTER USING RECTANGULAR WINDOW
+
+Wn = Fc/(Fs/2);         % Normalized Cutoff Frequency
+
+b = fir1(N,Wn,'high',rectwin(N+1));
+
+%% APPLY FIR FILTER
+
+y = filter(b,1,x);
+
+%% PLOT INPUT AND OUTPUT SIGNALS
+
+figure;
+
+subplot(2,1,1);
+
+plot(t(1:200),x(1:200),'LineWidth',1.2);
+
+title('Input Signal (50 Hz + 250 Hz)');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+
+subplot(2,1,2);
+
+plot(t(1:200),y(1:200),'LineWidth',1.2);
+
+title('Output Signal After FIR High-Pass Filtering');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+
+%% FREQUENCY RESPONSE OF FIR FILTER
+
+figure;
+
+freqz(b,1,1024,Fs);
+
+title('Frequency Response of FIR High-Pass Filter Using Rectangular Window');
+
+
+%% FFT ANALYSIS
+
+NFFT = 1024;
+
+X = fft(x,NFFT);
+
+Y = fft(y,NFFT);
+
+f = (0:NFFT-1)*(Fs/NFFT);
+
+figure;
+
+subplot(2,1,1);
+
+plot(f(1:NFFT/2),abs(X(1:NFFT/2)));
+
+title('Frequency Spectrum of Input Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+
+subplot(2,1,2);
+
+plot(f(1:NFFT/2),abs(Y(1:NFFT/2)));
+
+title('Frequency Spectrum of Filtered Output Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+
+%% IMPULSE RESPONSE
+
+figure;
+
+stem(0:N,b,'filled');
+
+title('Impulse Response of FIR High-Pass Filter');
+
+xlabel('Sample Number');
+
+ylabel('Amplitude');
+
+grid on;
+
+
+%% DISPLAY RESULTS
+
+fprintf('\n----- FIR HIGH-PASS FILTER RESULTS -----\n');
+
+fprintf('Sampling Frequency = %d Hz\n',Fs);
+
+fprintf('Cutoff Frequency = %d Hz\n',Fc);
+
+fprintf('Filter Order = %d\n',N);
+
+fprintf('Window Type = Rectangular Window\n');
+
+fprintf('\nFilter Coefficients:\n');
+
+disp(b);
+
+fprintf('\nFIR High-Pass Filter Implementation Completed Successfully.\n');
