@@ -1,0 +1,131 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 1000;              % Original Sampling Frequency
+T = 1/Fs;               % Sampling Period
+L = 1000;               % Number of Samples
+t = (0:L-1)*T;          % Time Vector
+
+f1 = 50;                % Signal Frequency
+
+%% GENERATE ORIGINAL SIGNAL
+
+x = sin(2*pi*f1*t);
+
+%% DECIMATION
+
+M = 2;                  % Decimation Factor
+
+% Downsample the signal
+x_decimated = downsample(x,M);
+
+% New sampling frequency after decimation
+Fs_decimated = Fs/M;
+
+% Time vector for decimated signal
+t_decimated = (0:length(x_decimated)-1)/Fs_decimated;
+
+%% INTERPOLATION
+
+L_interp = 2;           % Interpolation Factor
+
+% Upsample the decimated signal
+x_interpolated = interp(x_decimated,L_interp);
+
+% New sampling frequency after interpolation
+Fs_interpolated = Fs_decimated*L_interp;
+
+% Time vector for interpolated signal
+t_interpolated = (0:length(x_interpolated)-1)/Fs_interpolated;
+
+%% PLOT ORIGINAL, DECIMATED AND INTERPOLATED SIGNALS
+
+figure;
+
+subplot(3,1,1);
+plot(t,x,'LineWidth',1.2);
+title('Original Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+subplot(3,1,2);
+stem(t_decimated,x_decimated,'filled');
+title('Decimated Signal (Factor = 2)');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+subplot(3,1,3);
+plot(t_interpolated,x_interpolated,'LineWidth',1.2);
+title('Interpolated Signal (Factor = 2)');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+%% FREQUENCY ANALYSIS
+
+N = 1024;
+
+% FFT of Original Signal
+X = fft(x,N);
+f = (0:N-1)*(Fs/N);
+
+% FFT of Decimated Signal
+X_dec = fft(x_decimated,N);
+f_dec = (0:N-1)*(Fs_decimated/N);
+
+% FFT of Interpolated Signal
+X_interp = fft(x_interpolated,N);
+f_interp = (0:N-1)*(Fs_interpolated/N);
+
+%% PLOT FREQUENCY SPECTRUM
+
+figure;
+
+subplot(3,1,1);
+plot(f(1:N/2),abs(X(1:N/2)));
+title('Frequency Spectrum of Original Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+subplot(3,1,2);
+plot(f_dec(1:N/2),abs(X_dec(1:N/2)));
+title('Frequency Spectrum of Decimated Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+subplot(3,1,3);
+plot(f_interp(1:N/2),abs(X_interp(1:N/2)));
+title('Frequency Spectrum of Interpolated Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+%% DISPLAY RESULTS
+
+fprintf('\n----- MULTIRATE SIGNAL PROCESSING RESULTS -----\n');
+
+fprintf('Original Sampling Frequency = %d Hz\n', Fs);
+
+fprintf('Decimation Factor = %d\n', M);
+
+fprintf('Sampling Frequency After Decimation = %d Hz\n', Fs_decimated);
+
+fprintf('Interpolation Factor = %d\n', L_interp);
+
+fprintf('Sampling Frequency After Interpolation = %d Hz\n', Fs_interpolated);
+
+fprintf('Original Signal Samples = %d\n', length(x));
+
+fprintf('Decimated Signal Samples = %d\n', length(x_decimated));
+
+fprintf('Interpolated Signal Samples = %d\n', length(x_interpolated));

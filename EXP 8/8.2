@@ -1,0 +1,186 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 1000;              % Original Sampling Frequency
+T = 1/Fs;               % Sampling Period
+N = 1000;               % Number of Samples
+t = (0:N-1)*T;          % Time Vector
+
+%% INPUT SIGNAL
+
+f1 = 50;                % Signal Frequency
+f2 = 180;               % Additional Frequency Component
+
+x = sin(2*pi*f1*t) + 0.5*sin(2*pi*f2*t);
+
+%% DECIMATION FACTOR
+
+M = 2;
+
+%% DESIGN LOW-PASS FILTER FOR DECIMATION
+
+Fc = 200;               % Cutoff Frequency
+
+h = fir1(40,Fc/(Fs/2));
+
+%% NORMAL FILTERING AND DECIMATION
+
+x_filtered = filter(h,1,x);
+
+x_decimated = downsample(x_filtered,M);
+
+Fs_decimated = Fs/M;
+
+t_decimated = (0:length(x_decimated)-1)/Fs_decimated;
+
+%% POLYPHASE DECIMATION IMPLEMENTATION
+
+% Separate filter coefficients into polyphase components
+
+h0 = h(1:2:end);        % Even phase coefficients
+h1 = h(2:2:end);        % Odd phase coefficients
+
+% Separate input signal
+
+x0 = x(1:2:end);
+
+x1 = x(2:2:end);
+
+% Filter each phase
+
+y0 = filter(h0,1,x0);
+
+y1 = filter(h1,1,x1);
+
+% Combine polyphase outputs
+
+min_length = min(length(y0),length(y1));
+
+x_poly_decimated = y0(1:min_length) + y1(1:min_length);
+
+%% INTERPOLATION FACTOR
+
+L = 2;
+
+%% NORMAL INTERPOLATION
+
+x_interpolated = interp(x_decimated,L);
+
+Fs_interpolated = Fs_decimated*L;
+
+t_interpolated = (0:length(x_interpolated)-1)/Fs_interpolated;
+
+%% POLYPHASE INTERPOLATION
+
+% Upsample the signal
+
+x_upsampled = upsample(x_decimated,L);
+
+% Separate interpolation filter into phases
+
+g0 = h(1:2:end);
+
+g1 = h(2:2:end);
+
+% Filter using polyphase components
+
+z0 = filter(g0,1,x_decimated);
+
+z1 = filter(g1,1,x_decimated);
+
+% Combine outputs
+
+x_poly_interpolated = zeros(1,2*length(x_decimated));
+
+x_poly_interpolated(1:2:end) = z0;
+
+x_poly_interpolated(2:2:end) = z1;
+
+%% PLOT TIME DOMAIN SIGNALS
+
+figure;
+
+subplot(4,1,1);
+plot(t,x,'LineWidth',1.2);
+title('Original Input Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+subplot(4,1,2);
+plot(t_decimated,x_decimated,'LineWidth',1.2);
+title('Conventional Decimated Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+subplot(4,1,3);
+plot(t_decimated(1:length(x_poly_decimated)),...
+     x_poly_decimated,'LineWidth',1.2);
+title('Polyphase Decimated Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+subplot(4,1,4);
+plot(t_interpolated,x_interpolated,'LineWidth',1.2);
+title('Interpolated Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+xlim([0 0.1]);
+
+%% FREQUENCY RESPONSE OF FILTER
+
+figure;
+
+freqz(h,1,1024,Fs);
+
+title('FIR Low-Pass Filter Frequency Response');
+
+%% COMPARE DECIMATION METHODS
+
+figure;
+
+plot(t_decimated,x_decimated,'b','LineWidth',1.2);
+hold on;
+
+plot(t_decimated(1:length(x_poly_decimated)),...
+     x_poly_decimated,'r--','LineWidth',1.2);
+
+title('Comparison: Conventional vs Polyphase Decimation');
+
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+
+legend('Conventional Decimation','Polyphase Decimation');
+
+grid on;
+
+xlim([0 0.1]);
+
+%% DISPLAY RESULTS
+
+fprintf('\n----- POLYPHASE MULTIRATE PROCESSING RESULTS -----\n');
+
+fprintf('Original Sampling Frequency = %d Hz\n',Fs);
+
+fprintf('Decimation Factor = %d\n',M);
+
+fprintf('Sampling Frequency After Decimation = %d Hz\n',Fs_decimated);
+
+fprintf('Interpolation Factor = %d\n',L);
+
+fprintf('Sampling Frequency After Interpolation = %d Hz\n',Fs_interpolated);
+
+fprintf('\nPolyphase Implementation Successfully Completed.\n');
+
+fprintf('Polyphase filtering reduces computational complexity\n');
+
+fprintf('by performing filtering at a lower sampling rate.\n');
