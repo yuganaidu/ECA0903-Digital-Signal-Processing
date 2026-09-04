@@ -1,0 +1,188 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 8000;              % Sampling Frequency
+N = 5000;               % Number of Samples
+n = 1:N;
+t = n/Fs;
+
+%% INPUT SIGNAL
+
+% Generate input signal (speech-like combination of sinusoids)
+x = sin(2*pi*300*t) + ...
+    0.7*sin(2*pi*600*t) + ...
+    0.5*sin(2*pi*900*t);
+
+% Normalize input signal
+x = x / max(abs(x));
+
+%% ECHO PATH
+
+% Unknown echo path
+h_echo = [0.8 0.5 0.3 0.2 0.1];
+
+% Generate echo signal
+echo = filter(h_echo,1,x);
+
+%% DESIRED SIGNAL
+
+% Add small background noise
+noise = 0.02*randn(1,N);
+
+% Microphone signal contains echo + noise
+d = echo + noise;
+
+%% LMS ALGORITHM
+
+M = 5;                  % Filter length
+mu = 0.01;              % LMS Step Size
+
+w_lms = zeros(M,1);
+y_lms = zeros(1,N);
+e_lms = zeros(1,N);
+
+for i = M:N
+    
+    % Input vector
+    x_vec = x(i:-1:i-M+1)';
+    
+    % Filter output (estimated echo)
+    y_lms(i) = w_lms' * x_vec;
+    
+    % Error signal (echo cancelled output)
+    e_lms(i) = d(i) - y_lms(i);
+    
+    % Update LMS filter coefficients
+    w_lms = w_lms + mu * e_lms(i) * x_vec;
+end
+
+%% NLMS ALGORITHM
+
+mu_nlms = 0.5;           % NLMS Step Size
+delta = 0.001;           % Small value to avoid division by zero
+
+w_nlms = zeros(M,1);
+y_nlms = zeros(1,N);
+e_nlms = zeros(1,N);
+
+for i = M:N
+    
+    % Input vector
+    x_vec = x(i:-1:i-M+1)';
+    
+    % Filter output (estimated echo)
+    y_nlms(i) = w_nlms' * x_vec;
+    
+    % Error signal
+    e_nlms(i) = d(i) - y_nlms(i);
+    
+    % Normalized LMS coefficient update
+    norm_factor = delta + (x_vec' * x_vec);
+    
+    w_nlms = w_nlms + ...
+        (mu_nlms / norm_factor) * e_nlms(i) * x_vec;
+end
+
+%% CALCULATE MSE
+
+mse_lms = mean(e_lms(M:end).^2);
+
+mse_nlms = mean(e_nlms(M:end).^2);
+
+%% PLOT INPUT AND ECHO SIGNAL
+
+figure;
+
+subplot(3,1,1);
+plot(t(1:1000),x(1:1000),'LineWidth',1);
+title('Input Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,2);
+plot(t(1:1000),echo(1:1000),'LineWidth',1);
+title('Echo Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,3);
+plot(t(1:1000),d(1:1000),'LineWidth',1);
+title('Microphone Signal (Echo + Noise)');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+%% PLOT LMS AND NLMS ERROR SIGNALS
+
+figure;
+
+subplot(2,1,1);
+plot(t(1:1000),e_lms(1:1000),'LineWidth',1);
+title('LMS Echo Cancellation Error Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(2,1,2);
+plot(t(1:1000),e_nlms(1:1000),'LineWidth',1);
+title('NLMS Echo Cancellation Error Signal');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+%% LEARNING CURVE
+
+figure;
+
+plot(10*log10(e_lms.^2 + 1e-10),'LineWidth',1);
+hold on;
+
+plot(10*log10(e_nlms.^2 + 1e-10),'LineWidth',1);
+
+title('Performance Comparison: LMS vs NLMS');
+xlabel('Sample Number');
+ylabel('Squared Error (dB)');
+
+legend('LMS','NLMS');
+grid on;
+
+%% FILTER COEFFICIENT COMPARISON
+
+figure;
+
+stem(h_echo,'filled','LineWidth',1.2);
+hold on;
+
+stem(w_lms,'LineWidth',1.2);
+
+stem(w_nlms,'LineWidth',1.2);
+
+title('Echo Path and Estimated Filter Coefficients');
+xlabel('Filter Coefficient Index');
+ylabel('Coefficient Value');
+
+legend('Actual Echo Path','LMS Estimate','NLMS Estimate');
+grid on;
+
+%% DISPLAY RESULTS
+
+fprintf('\n----- ADAPTIVE ECHO CANCELLATION RESULTS -----\n');
+
+fprintf('Sampling Frequency = %d Hz\n',Fs);
+
+fprintf('Filter Length = %d\n',M);
+
+fprintf('LMS Step Size = %.3f\n',mu);
+
+fprintf('NLMS Step Size = %.2f\n',mu_nlms);
+
+fprintf('\nLMS Mean Square Error = %.6f\n',mse_lms);
+
+fprintf('NLMS Mean Square Error = %.6f\n',mse_nlms);
+
+fprintf('\nLMS and NLMS Adaptive Echo Cancellation Completed Successfully.\n');
