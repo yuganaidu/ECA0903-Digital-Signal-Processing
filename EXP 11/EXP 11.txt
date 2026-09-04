@@ -1,0 +1,116 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 1000;                 % Sampling Frequency in Hz
+Fc = 100;                  % Cutoff Frequency in Hz
+N = 4;                     % Filter Order
+
+t = 0:1/Fs:1-1/Fs;         % Time Vector
+
+%% GENERATE INPUT SIGNAL
+
+% Low-frequency signal (50 Hz)
+f1 = 50;
+
+% High-frequency noise (250 Hz)
+f2 = 250;
+
+% Combined input signal
+x = sin(2*pi*f1*t) + 0.5*sin(2*pi*f2*t);
+
+%% DESIGN IIR LOW-PASS BUTTERWORTH FILTER
+
+Wn = Fc/(Fs/2);            % Normalized Cutoff Frequency
+
+[b,a] = butter(N,Wn,'low');
+
+%% APPLY IIR FILTER
+
+y = filter(b,a,x);
+
+%% PLOT INPUT AND OUTPUT SIGNALS
+
+figure;
+
+subplot(2,1,1);
+
+plot(t(1:200),x(1:200),'LineWidth',1.2);
+
+title('Input Signal (50 Hz + 250 Hz)');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+
+subplot(2,1,2);
+
+plot(t(1:200),y(1:200),'LineWidth',1.2);
+
+title('Output Signal After IIR Low-Pass Filtering');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+
+%% FREQUENCY RESPONSE OF IIR FILTER
+
+figure;
+
+freqz(b,a,1024,Fs);
+
+title('Frequency Response of IIR Butterworth Low-Pass Filter');
+
+
+%% FFT ANALYSIS
+
+NFFT = 1024;
+
+X = fft(x,NFFT);
+Y = fft(y,NFFT);
+
+f = (0:NFFT-1)*(Fs/NFFT);
+
+figure;
+
+subplot(2,1,1);
+
+plot(f(1:NFFT/2),abs(X(1:NFFT/2)));
+
+title('Frequency Spectrum of Input Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+
+subplot(2,1,2);
+
+plot(f(1:NFFT/2),abs(Y(1:NFFT/2)));
+
+title('Frequency Spectrum of Filtered Output Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+grid on;
+
+
+%% DISPLAY FILTER COEFFICIENTS
+
+fprintf('\n----- IIR LOW-PASS FILTER RESULTS -----\n');
+
+fprintf('Sampling Frequency = %d Hz\n',Fs);
+
+fprintf('Cutoff Frequency = %d Hz\n',Fc);
+
+fprintf('Filter Order = %d\n',N);
+
+fprintf('\nNumerator Coefficients (b):\n');
+
+disp(b);
+
+fprintf('\nDenominator Coefficients (a):\n');
+
+disp(a);
+
+fprintf('\nIIR Low-Pass Filter Implementation Completed Successfully.\n');
