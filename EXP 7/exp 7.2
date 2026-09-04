@@ -1,0 +1,125 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 1000;              % Sampling Frequency
+T = 1/Fs;               % Sampling Period
+L = 1000;               % Number of Samples
+t = (0:L-1)*T;          % Time Vector
+
+f1 = 50.5;              % Signal Frequency (Non-integer frequency)
+x = sin(2*pi*f1*t);     % Generate Sinusoidal Signal
+
+%% CREATE WINDOWS
+
+rect_window = rectwin(L);       % Rectangular Window
+hamming_window = hamming(L);    % Hamming Window
+hanning_window = hann(L);       % Hanning Window
+
+%% APPLY WINDOWS
+
+x_rect = x .* rect_window;
+x_hamming = x .* hamming_window;
+x_hanning = x .* hanning_window;
+
+%% PLOT THE WINDOWS
+
+figure;
+
+subplot(3,1,1);
+plot(t,rect_window);
+title('Rectangular Window');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,2);
+plot(t,hamming_window);
+title('Hamming Window');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+subplot(3,1,3);
+plot(t,hanning_window);
+title('Hanning Window');
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+grid on;
+
+%% CALCULATE PSD USING PERIODOGRAM
+
+[P_rect,f] = periodogram(x,rect_window,L,Fs);
+
+[P_hamming,~] = periodogram(x,hamming_window,L,Fs);
+
+[P_hanning,~] = periodogram(x,hanning_window,L,Fs);
+
+%% PLOT PSD OF EACH WINDOW
+
+figure;
+
+subplot(3,1,1);
+plot(f,10*log10(P_rect));
+title('PSD Using Rectangular Window');
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+grid on;
+xlim([0 100]);
+
+subplot(3,1,2);
+plot(f,10*log10(P_hamming));
+title('PSD Using Hamming Window');
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+grid on;
+xlim([0 100]);
+
+subplot(3,1,3);
+plot(f,10*log10(P_hanning));
+title('PSD Using Hanning Window');
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+grid on;
+xlim([0 100]);
+
+%% COMPARE ALL WINDOWS
+
+figure;
+
+plot(f,10*log10(P_rect),'LineWidth',1.2);
+hold on;
+
+plot(f,10*log10(P_hamming),'LineWidth',1.2);
+
+plot(f,10*log10(P_hanning),'LineWidth',1.2);
+
+title('Comparison of Windowing Effects on Spectral Estimation');
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+
+legend('Rectangular','Hamming','Hanning');
+
+grid on;
+xlim([0 100]);
+
+%% FIND DOMINANT FREQUENCY
+
+[~,index_rect] = max(P_rect);
+[~,index_hamming] = max(P_hamming);
+[~,index_hanning] = max(P_hanning);
+
+fprintf('\n----- WINDOWING ANALYSIS RESULTS -----\n');
+
+fprintf('Original Signal Frequency = %.2f Hz\n\n',f1);
+
+fprintf('Rectangular Window Dominant Frequency = %.2f Hz\n', ...
+    f(index_rect));
+
+fprintf('Hamming Window Dominant Frequency = %.2f Hz\n', ...
+    f(index_hamming));
+
+fprintf('Hanning Window Dominant Frequency = %.2f Hz\n', ...
+    f(index_hanning));

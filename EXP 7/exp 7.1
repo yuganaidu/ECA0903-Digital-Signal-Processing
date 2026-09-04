@@ -1,0 +1,86 @@
+clc;
+clear;
+close all;
+
+%% PARAMETERS
+
+Fs = 1000;              % Sampling frequency (Hz)
+T = 1/Fs;               % Sampling period
+L = 1000;               % Number of samples
+t = (0:L-1)*T;          % Time vector
+
+f1 = 50;                % Sinusoidal signal frequency
+A = 1;                  % Signal amplitude
+
+%% GENERATE CLEAN SINUSOIDAL SIGNAL
+
+x = A*sin(2*pi*f1*t);
+
+%% ADD NOISE
+
+noise = 0.5*randn(size(t));   % Gaussian noise
+x_noisy = x + noise;
+
+%% PLOT CLEAN AND NOISY SIGNAL
+
+figure;
+
+subplot(2,1,1);
+plot(t,x);
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+title('Original Sinusoidal Signal');
+grid on;
+
+subplot(2,1,2);
+plot(t,x_noisy);
+xlabel('Time (seconds)');
+ylabel('Amplitude');
+title('Noisy Sinusoidal Signal');
+grid on;
+
+%% POWER SPECTRAL DENSITY USING PERIODOGRAM
+
+figure;
+
+[Pxx,f] = periodogram(x_noisy,[],L,Fs);
+
+plot(f,10*log10(Pxx),'LineWidth',1.5);
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+title('Power Spectral Density Using Periodogram Method');
+grid on;
+
+%% FIND DOMINANT FREQUENCY
+
+[maxPower,index] = max(Pxx);
+dominant_frequency = f(index);
+
+fprintf('Dominant Frequency = %.2f Hz\n', dominant_frequency);
+
+%% COMPARE CLEAN AND NOISY SIGNAL SPECTRUM
+
+figure;
+
+[P_clean,f_clean] = periodogram(x,[],L,Fs);
+[P_noisy,f_noisy] = periodogram(x_noisy,[],L,Fs);
+
+plot(f_clean,10*log10(P_clean),'LineWidth',1.5);
+hold on;
+
+plot(f_noisy,10*log10(P_noisy),'LineWidth',1.5);
+
+xlabel('Frequency (Hz)');
+ylabel('Power/Frequency (dB/Hz)');
+title('Comparison of Clean and Noisy Signal PSD');
+
+legend('Clean Signal','Noisy Signal');
+grid on;
+
+%% DISPLAY RESULTS
+
+fprintf('\n----- SPECTRAL ANALYSIS RESULTS -----\n');
+fprintf('Sampling Frequency = %d Hz\n', Fs);
+fprintf('Signal Frequency = %d Hz\n', f1);
+fprintf('Dominant Frequency Detected = %.2f Hz\n', dominant_frequency);
+fprintf('Number of Samples = %d\n', L);
