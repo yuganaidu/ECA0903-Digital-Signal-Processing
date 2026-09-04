@@ -1,0 +1,56 @@
+clc;
+clear;
+close all;
+
+% FIR Low-Pass Filter using Hanning Window
+
+% Specifications
+Fs = 1000;          % Sampling frequency (Hz)
+Fc = 100;           % Cut-off frequency (Hz)
+N = 50;             % Filter order
+
+% Normalized cut-off frequency
+Wn = Fc/(Fs/2);
+
+% Generate Hanning window
+w = hann(N+1);
+
+% Design FIR low-pass filter
+b = fir1(N, Wn, 'low', w);
+
+% Display filter coefficients
+disp('FIR Filter Coefficients:');
+disp(b);
+
+% Frequency response
+[H, f] = freqz(b, 1, 1024, Fs);
+
+% Magnitude response
+figure;
+plot(f, abs(H), 'LineWidth', 1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+title('Magnitude Response of FIR Low-Pass Filter using Hanning Window');
+
+% Phase response
+figure;
+plot(f, angle(H), 'LineWidth', 1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Phase (Radians)');
+title('Phase Response of FIR Low-Pass Filter using Hanning Window');
+
+% Impulse response
+figure;
+stem(0:N, b, 'filled');
+grid on;
+xlabel('Sample');
+ylabel('Amplitude');
+title('Impulse Response of FIR Low-Pass Filter');
+
+% Pole-Zero plot
+figure;
+zplane(b, 1);
+grid on;
+title('Pole-Zero Plot of FIR Low-Pass Filter');

@@ -1,0 +1,39 @@
+clc;
+clear;
+close all;
+
+% Filter specifications
+Fs = 1000;          % Sampling frequency
+Fc = 100;           % Cutoff frequency
+N = 50;             % Filter order
+
+% Normalized cutoff frequency
+Wn = Fc/(Fs/2);
+
+% FIR Low Pass Filter using Rectangular Window
+b = fir1(N, Wn, 'low', rectwin(N+1));
+a = 1;
+
+% Frequency response
+[H, f] = freqz(b, a, 1024, Fs);
+
+% Plot frequency response
+figure;
+plot(f, abs(H));
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+title('FIR Low-Pass Filter using Rectangular Window');
+
+% Impulse response
+figure;
+stem(0:N, b, 'filled');
+grid on;
+xlabel('Samples');
+ylabel('Amplitude');
+title('Impulse Response of FIR Low-Pass Filter');
+
+% Pole-zero plot
+figure;
+zplane(b, a);
+title('Pole-Zero Plot');
