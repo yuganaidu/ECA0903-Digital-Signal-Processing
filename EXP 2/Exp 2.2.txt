@@ -1,0 +1,35 @@
+clc;
+clear;
+close all;
+
+Fs = 1000;
+Fc = 100;
+N = 4;
+Rp = 1;
+
+Wn = Fc/(Fs/2);
+
+[b,a] = cheby1(N,Rp,Wn,'high');
+
+disp(b);
+disp(a);
+
+figure;
+freqz(b,a,1024,Fs);
+
+figure;
+[h,f] = freqz(b,a,1024,Fs);
+
+subplot(2,1,1);
+plot(f,20*log10(abs(h)),'LineWidth',1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Magnitude (dB)');
+title('Magnitude Response');
+
+subplot(2,1,2);
+plot(f,angle(h),'LineWidth',1.5);
+grid on;
+xlabel('Frequency (Hz)');
+ylabel('Phase (Radians)');
+title('Phase Response');
